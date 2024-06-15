@@ -1,4 +1,5 @@
 const std = @import("std");
+const Sha256 = std.crypto.hash.sha2.Sha256;
 
 const Poh = struct {
     currHash: []u8,
@@ -16,7 +17,11 @@ const Poh = struct {
         };
     }
 
-    fn nextHash(self: *Poh) void {
+    fn nextHash(self: *Poh) !void {
+        var hasher = Sha256.init(.{});
+        hasher.update(self.currHash);
+        std.heap.page_allocator.free(self.currHash);
+        self.currHash = try std.heap.page_allocator.dupe(u8, &hasher.finalResult());
         self.numHashes += 1;
         self.remainingHashes -= 1;
     }
@@ -24,7 +29,7 @@ const Poh = struct {
     fn tick(self: *Poh) !void {
         while (self.remainingHashes > 0) {
             std.debug.print("new hash\n", .{});
-            self.nextHash();
+            try self.nextHash();
         }
         std.debug.print("reset\n", .{});
         try self.reset();

@@ -20,17 +20,20 @@ pub const Recorder = struct {
     pub fn tick(self: *Recorder) void {
         std.debug.print("tick\n", .{});
 
-        var hasher = Sha256.init(.{});
-        for (self.transactions.items) |trx| {
-            hasher.update(trx);
-        }
+        const mixin = self.hashTransactions();
         self.transactions.clearRetainingCapacity();
-
-        const mixin = hasher.finalResult();
         const tick_hash = self.poh.tick(&mixin);
 
         self.bank.recordTick(tick_hash);
         std.time.sleep(2 * 1e9);
+    }
+
+    fn hashTransactions(self: *Recorder) [Sha256.digest_length]u8 {
+        var hasher = Sha256.init(.{});
+        for (self.transactions.items) |trx| {
+            hasher.update(trx);
+        }
+        return hasher.finalResult();
     }
 
     pub fn recordTransactions(self: *Recorder, trxs: []const Transaction) !void {

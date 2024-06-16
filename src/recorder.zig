@@ -5,6 +5,8 @@ const Poh = @import("root.zig").Poh;
 const MockBank = @import("root.zig").MockBank;
 const Transaction = @import("root.zig").Transaction;
 
+const hashes_per_tick = 5;
+
 pub const Recorder = struct {
     poh: Poh,
     transactions: std.ArrayList(Transaction),
@@ -12,7 +14,7 @@ pub const Recorder = struct {
 
     pub fn init(bank: MockBank) !Recorder {
         return Recorder{
-            .poh = try Poh.init("initial hash", 5),
+            .poh = try Poh.init("initial buf", hashes_per_tick),
             .transactions = std.ArrayList(Transaction).init(std.heap.page_allocator),
             .bank = bank,
         };

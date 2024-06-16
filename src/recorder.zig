@@ -30,7 +30,7 @@ pub const Recorder = struct {
         std.time.sleep(2 * 1e9);
     }
 
-    pub fn recordTransactions(self: *Recorder, trxs: []Transaction) !void {
+    pub fn recordTransactions(self: *Recorder, trxs: []const Transaction) !void {
         for (trxs) |trx| {
             const copied = try std.heap.page_allocator.dupe(u8, trx);
             try self.transactions.append(copied);

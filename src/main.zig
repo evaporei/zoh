@@ -1,4 +1,3 @@
-const std = @import("std");
 const zoh = @import("root.zig");
 const MockBank = zoh.MockBank;
 const Service = zoh.Service;

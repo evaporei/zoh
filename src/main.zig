@@ -47,9 +47,13 @@ const Poh = struct {
 
 const Recorder = struct {
     poh: Poh,
+    transactions: std.ArrayList([]const u8),
 
     fn init() !Recorder {
-        return Recorder{ .poh = try Poh.init("initial hash", 5) };
+        return Recorder{
+            .poh = try Poh.init("initial hash", 5),
+            .transactions = std.ArrayList([]const u8).init(std.heap.page_allocator),
+        };
     }
 
     fn tick(self: *Recorder) !void {
@@ -58,8 +62,16 @@ const Recorder = struct {
         std.time.sleep(2 * 1e9);
     }
 
+    fn record_transactions(self: *Recorder, trxs: std.ArrayList([]const u8)) !void {
+        for (trxs.items) |trx| {
+            const copied = try std.heap.page_allocator.dupe(u8, trx);
+            try self.transactions.append(copied);
+        }
+    }
+
     fn deinit(self: *Recorder) void {
         self.poh.deinit();
+        self.transactions.deinit();
     }
 };
 
@@ -73,6 +85,14 @@ const Service = struct {
     fn run(self: *Service) !void {
         std.debug.print("start\n", .{});
         while (true) {
+            var trxs = std.ArrayList([]const u8).init(std.heap.page_allocator);
+            for (0..20) |i| {
+                var buf: [5]u8 = undefined;
+                const trx = try std.fmt.bufPrint(&buf, "trx{d}", .{i});
+                try trxs.append(trx);
+            }
+            defer trxs.deinit();
+            try self.recorder.record_transactions(trxs);
             try self.recorder.tick();
         }
     }

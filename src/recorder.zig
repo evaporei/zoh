@@ -2,16 +2,17 @@ const std = @import("std");
 const Sha256 = std.crypto.hash.sha2.Sha256;
 const Poh = @import("root.zig").Poh;
 const MockBank = @import("root.zig").MockBank;
+const Transaction = @import("root.zig").Transaction;
 
 pub const Recorder = struct {
     poh: Poh,
-    transactions: std.ArrayList([]const u8),
+    transactions: std.ArrayList(Transaction),
     bank: MockBank,
 
     pub fn init(bank: MockBank) !Recorder {
         return Recorder{
             .poh = try Poh.init("initial hash", 5),
-            .transactions = std.ArrayList([]const u8).init(std.heap.page_allocator),
+            .transactions = std.ArrayList(Transaction).init(std.heap.page_allocator),
             .bank = bank,
         };
     }
@@ -29,7 +30,7 @@ pub const Recorder = struct {
         std.time.sleep(2 * 1e9);
     }
 
-    pub fn recordTransactions(self: *Recorder, trxs: [][]const u8) !void {
+    pub fn recordTransactions(self: *Recorder, trxs: []Transaction) !void {
         for (trxs) |trx| {
             const copied = try std.heap.page_allocator.dupe(u8, trx);
             try self.transactions.append(copied);

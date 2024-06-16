@@ -17,19 +17,20 @@ const Poh = struct {
         };
     }
 
-    fn nextHash(self: *Poh) !void {
+    fn nextHash(self: *Poh, mixin: []const u8) !void {
         var hasher = Sha256.init(.{});
         hasher.update(self.currHash);
+        hasher.update(mixin);
         std.heap.page_allocator.free(self.currHash);
         self.currHash = try std.heap.page_allocator.dupe(u8, &hasher.finalResult());
         self.numHashes += 1;
         self.remainingHashes -= 1;
     }
 
-    fn tick(self: *Poh) !void {
+    fn tick(self: *Poh, mixin: []const u8) !void {
         while (self.remainingHashes > 0) {
             std.debug.print("new hash\n", .{});
-            try self.nextHash();
+            try self.nextHash(mixin);
         }
         std.debug.print("reset\n", .{});
         try self.reset();
@@ -58,7 +59,13 @@ const Recorder = struct {
 
     fn tick(self: *Recorder) !void {
         std.debug.print("tick\n", .{});
-        try self.poh.tick();
+        var hasher = Sha256.init(.{});
+        for (self.transactions.items) |trx| {
+            hasher.update(trx);
+        }
+        self.transactions.clearRetainingCapacity();
+        const mixin = try std.heap.page_allocator.dupe(u8, &hasher.finalResult());
+        try self.poh.tick(mixin);
         std.time.sleep(2 * 1e9);
     }
 
@@ -85,14 +92,14 @@ const Service = struct {
     fn run(self: *Service) !void {
         std.debug.print("start\n", .{});
         while (true) {
-            var trxs = std.ArrayList([]const u8).init(std.heap.page_allocator);
+            var mock_trxs = std.ArrayList([]const u8).init(std.heap.page_allocator);
             for (0..20) |i| {
                 var buf: [5]u8 = undefined;
-                const trx = try std.fmt.bufPrint(&buf, "trx{d}", .{i});
-                try trxs.append(trx);
+                const mock_trx = try std.fmt.bufPrint(&buf, "trx{d}", .{i});
+                try mock_trxs.append(mock_trx);
             }
-            defer trxs.deinit();
-            try self.recorder.record_transactions(trxs);
+            defer mock_trxs.deinit();
+            try self.recorder.record_transactions(mock_trxs);
             try self.recorder.tick();
         }
     }

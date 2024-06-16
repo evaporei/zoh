@@ -31,7 +31,7 @@ pub const Recorder = struct {
         const tick_hash = self.poh.tick(&mixin);
 
         self.bank.recordTick(tick_hash);
-        std.time.sleep(2 * 1e9);
+        std.time.sleep(2 * std.time.ns_per_s);
     }
 
     fn hashTransactions(self: *Recorder) [Sha256.digest_length]u8 {

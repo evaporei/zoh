@@ -19,7 +19,7 @@ pub const Service = struct {
                 try mock_trxs.append(mock_trx);
             }
             defer mock_trxs.deinit();
-            try self.recorder.record_transactions(mock_trxs);
+            try self.recorder.recordTransactions(mock_trxs);
             try self.recorder.tick();
         }
     }

@@ -25,11 +25,11 @@ pub const Recorder = struct {
         self.transactions.clearRetainingCapacity();
         const mixin = try std.heap.page_allocator.dupe(u8, &hasher.finalResult());
         const tick_hash = try self.poh.tick(mixin);
-        self.bank.record_tick(tick_hash);
+        self.bank.recordTick(tick_hash);
         std.time.sleep(2 * 1e9);
     }
 
-    pub fn record_transactions(self: *Recorder, trxs: std.ArrayList([]const u8)) !void {
+    pub fn recordTransactions(self: *Recorder, trxs: std.ArrayList([]const u8)) !void {
         for (trxs.items) |trx| {
             const copied = try std.heap.page_allocator.dupe(u8, trx);
             try self.transactions.append(copied);

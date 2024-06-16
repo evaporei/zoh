@@ -5,7 +5,7 @@ pub const MockBank = struct {
         return MockBank{ .tickHeight = 0 };
     }
 
-    pub fn record_tick(self: *MockBank, _: []const u8) void {
+    pub fn recordTick(self: *MockBank, _: []const u8) void {
         self.tickHeight += 1;
         // do something with tick hash
     }

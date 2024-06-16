@@ -1,6 +1,19 @@
 const std = @import("std");
 const Sha256 = std.crypto.hash.sha2.Sha256;
 
+const MockBank = struct {
+    tickHeight: u32,
+
+    fn init() MockBank {
+        return MockBank{ .tickHeight = 0 };
+    }
+
+    fn record_tick(self: *MockBank, _: []const u8) void {
+        self.tickHeight += 1;
+        // do something with tick hash
+    }
+};
+
 const Poh = struct {
     currHash: []u8,
     hashesPerTick: u32,
@@ -27,13 +40,15 @@ const Poh = struct {
         self.remainingHashes -= 1;
     }
 
-    fn tick(self: *Poh, mixin: []const u8) !void {
+    fn tick(self: *Poh, mixin: []const u8) ![]const u8 {
         while (self.remainingHashes > 0) {
             std.debug.print("new hash\n", .{});
             try self.nextHash(mixin);
         }
         std.debug.print("reset\n", .{});
+        const final = try std.heap.page_allocator.dupe(u8, self.currHash);
         try self.reset();
+        return final;
     }
 
     fn reset(self: *Poh) !void {
@@ -49,11 +64,13 @@ const Poh = struct {
 const Recorder = struct {
     poh: Poh,
     transactions: std.ArrayList([]const u8),
+    bank: MockBank,
 
-    fn init() !Recorder {
+    fn init(bank: MockBank) !Recorder {
         return Recorder{
             .poh = try Poh.init("initial hash", 5),
             .transactions = std.ArrayList([]const u8).init(std.heap.page_allocator),
+            .bank = bank,
         };
     }
 
@@ -65,7 +82,8 @@ const Recorder = struct {
         }
         self.transactions.clearRetainingCapacity();
         const mixin = try std.heap.page_allocator.dupe(u8, &hasher.finalResult());
-        try self.poh.tick(mixin);
+        const tick_hash = try self.poh.tick(mixin);
+        self.bank.record_tick(tick_hash);
         std.time.sleep(2 * 1e9);
     }
 
@@ -85,8 +103,8 @@ const Recorder = struct {
 const Service = struct {
     recorder: Recorder,
 
-    fn init() !Service {
-        return Service{ .recorder = try Recorder.init() };
+    fn init(bank: MockBank) !Service {
+        return Service{ .recorder = try Recorder.init(bank) };
     }
 
     fn run(self: *Service) !void {
@@ -110,7 +128,8 @@ const Service = struct {
 };
 
 pub fn main() !void {
-    var service = try Service.init();
+    const bank = MockBank.init();
+    var service = try Service.init(bank);
     defer service.deinit();
     try service.run();
 }

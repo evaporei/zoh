@@ -36,7 +36,12 @@ const Poh = struct {
     }
 
     fn reset(self: *Poh) !void {
-        self.* = try Poh.init(self.currHash, self.numHashes);
+        self.numHashes = 0;
+        self.remainingHashes = self.hashesPerTick;
+    }
+
+    fn deinit(self: *Poh) void {
+        std.heap.page_allocator.free(self.currHash);
     }
 };
 
@@ -51,6 +56,10 @@ const Recorder = struct {
         std.debug.print("tick\n", .{});
         try self.poh.tick();
         std.time.sleep(2 * 1e9);
+    }
+
+    fn deinit(self: *Recorder) void {
+        self.poh.deinit();
     }
 };
 
@@ -67,10 +76,15 @@ const Service = struct {
             try self.recorder.tick();
         }
     }
+
+    fn deinit(self: *Service) void {
+        self.recorder.deinit();
+    }
 };
 
 pub fn main() !void {
     var service = try Service.init();
+    defer service.deinit();
     try service.run();
 }
 

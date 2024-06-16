@@ -11,5 +11,5 @@ pub fn main() !void {
     const bank = MockBank.init();
     var service = try Service.init(allocator, bank);
     defer service.deinit();
-    try service.run();
+    try service.join();
 }

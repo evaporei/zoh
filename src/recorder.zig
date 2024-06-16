@@ -29,8 +29,8 @@ pub const Recorder = struct {
         std.time.sleep(2 * 1e9);
     }
 
-    pub fn recordTransactions(self: *Recorder, trxs: std.ArrayList([]const u8)) !void {
-        for (trxs.items) |trx| {
+    pub fn recordTransactions(self: *Recorder, trxs: [][]const u8) !void {
+        for (trxs) |trx| {
             const copied = try std.heap.page_allocator.dupe(u8, trx);
             try self.transactions.append(copied);
         }

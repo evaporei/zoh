@@ -18,10 +18,9 @@ pub const Service = struct {
     }
 
     fn run(self: *Service) !void {
-        std.debug.print("start\n", .{});
         while (true) {
             try self.recorder.recordTransactions(&mockTransactions);
-            self.recorder.tick();
+            try self.recorder.tick();
         }
     }
 

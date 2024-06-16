@@ -21,8 +21,10 @@ pub const Poh = struct {
         var hasher = Sha256.init(.{});
         hasher.update(self.currHash);
         hasher.update(mixin);
+
         std.heap.page_allocator.free(self.currHash);
         self.currHash = try std.heap.page_allocator.dupe(u8, &hasher.finalResult());
+
         self.numHashes += 1;
         self.remainingHashes -= 1;
     }
@@ -32,8 +34,9 @@ pub const Poh = struct {
             std.debug.print("new hash\n", .{});
             try self.nextHash(mixin);
         }
-        std.debug.print("reset\n", .{});
+
         const final = try std.heap.page_allocator.dupe(u8, self.currHash);
+        std.debug.print("reset\n", .{});
         try self.reset();
         return final;
     }

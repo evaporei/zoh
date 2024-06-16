@@ -19,13 +19,16 @@ pub const Recorder = struct {
 
     pub fn tick(self: *Recorder) !void {
         std.debug.print("tick\n", .{});
+
         var hasher = Sha256.init(.{});
         for (self.transactions.items) |trx| {
             hasher.update(trx);
         }
         self.transactions.clearRetainingCapacity();
-        const mixin = try std.heap.page_allocator.dupe(u8, &hasher.finalResult());
-        const tick_hash = try self.poh.tick(mixin);
+
+        const mixin = hasher.finalResult();
+        const tick_hash = try self.poh.tick(&mixin);
+
         self.bank.recordTick(tick_hash);
         std.time.sleep(2 * 1e9);
     }

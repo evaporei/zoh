@@ -17,7 +17,7 @@ pub const Recorder = struct {
         };
     }
 
-    pub fn tick(self: *Recorder) !void {
+    pub fn tick(self: *Recorder) void {
         std.debug.print("tick\n", .{});
 
         var hasher = Sha256.init(.{});
@@ -27,7 +27,7 @@ pub const Recorder = struct {
         self.transactions.clearRetainingCapacity();
 
         const mixin = hasher.finalResult();
-        const tick_hash = try self.poh.tick(&mixin);
+        const tick_hash = self.poh.tick(&mixin);
 
         self.bank.recordTick(tick_hash);
         std.time.sleep(2 * 1e9);
@@ -41,7 +41,6 @@ pub const Recorder = struct {
     }
 
     pub fn deinit(self: *Recorder) void {
-        self.poh.deinit();
         self.transactions.deinit();
     }
 };

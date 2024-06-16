@@ -15,7 +15,7 @@ pub const Service = struct {
         std.debug.print("start\n", .{});
         while (true) {
             try self.recorder.recordTransactions(&mockTransactions);
-            try self.recorder.tick();
+            self.recorder.tick();
         }
     }
 

@@ -17,7 +17,7 @@ pub const Recorder = struct {
     pub fn init(allocator: Allocator, bank: MockBank) !Recorder {
         return Recorder{
             .allocator = allocator,
-            .poh = try Poh.init("initial buf", hashes_per_tick),
+            .poh = try Poh.init("any random starting value", hashes_per_tick),
             .transactions = std.ArrayList(Transaction).init(allocator),
             .bank = bank,
         };

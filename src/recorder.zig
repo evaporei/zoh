@@ -6,7 +6,7 @@ const Poh = @import("root.zig").Poh;
 const MockBank = @import("root.zig").MockBank;
 const Transaction = @import("root.zig").Transaction;
 
-const hashes_per_tick = 5;
+const HASHES_PER_TICK = 5;
 
 pub const Recorder = struct {
     allocator: Allocator,
@@ -17,7 +17,7 @@ pub const Recorder = struct {
     pub fn init(allocator: Allocator, bank: MockBank) !Recorder {
         return Recorder{
             .allocator = allocator,
-            .poh = try Poh.init("any random starting value", hashes_per_tick),
+            .poh = try Poh.init("any random starting value", HASHES_PER_TICK),
             .transactions = std.ArrayList(Transaction).init(allocator),
             .bank = bank,
         };
@@ -28,9 +28,10 @@ pub const Recorder = struct {
 
         const mixin = self.hashTransactions();
         self.transactions.clearRetainingCapacity();
-        const tick_hash = self.poh.tick(&mixin);
+        const tickHash = self.poh.tick(&mixin);
 
-        self.bank.recordTick(tick_hash);
+        self.bank.recordTick(tickHash);
+        // TODO: should be proportional to time left in slot
         std.time.sleep(2 * std.time.ns_per_s);
     }
 
@@ -42,6 +43,8 @@ pub const Recorder = struct {
         return hasher.finalResult();
     }
 
+    // A simplified version of the transaction receiver that exists in
+    // the original codebase.
     pub fn recordTransactions(self: *Recorder, trxs: []const Transaction) !void {
         for (trxs) |trx| {
             const copied = try self.allocator.dupe(u8, trx);
